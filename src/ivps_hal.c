@@ -567,19 +567,19 @@ static AX_VOID *IVPS_SendFrameThread(AX_VOID *pArg)
     AX_S32 ret = 0;
     SAMPLE_IVPS_GRP_T *pThis = (SAMPLE_IVPS_GRP_T *)pArg;
 
-    printf("+++IVPS Grp: %d\n", pThis->nIvpsGrp);
+    ALOGI2("+++IVPS Grp: %d\n", pThis->nIvpsGrp);
 
     while (!ThreadLoopStateGet())
     {
         pThis->tFrameInput.u64SeqNum++;
         pThis->tFrameInput.u64PTS = GetTickCount();
-        printf("AX_IVPS_SendFrame seq num:%lld PTS:%lld userdata: %llx +++\n", pThis->tFrameInput.u64SeqNum,
+        ALOGI2("AX_IVPS_SendFrame seq num:%lld PTS:%lld userdata: %llx +++\n", pThis->tFrameInput.u64SeqNum,
                pThis->tFrameInput.u64PTS, pThis->tFrameInput.u64UserData);
 
         ret = AX_IVPS_SendFrame(pThis->nIvpsGrp, &pThis->tFrameInput, -1);
 
         usleep(40000);
-        ALOGI("AX_IVPS_SendFrame(Grp:%d) ---, ret: 0x%x", pThis->nIvpsGrp, ret);
+        ALOGI2("AX_IVPS_SendFrame(Grp:%d) ---, ret: 0x%x", pThis->nIvpsGrp, ret);
         if (IVPS_SUCC != ret)
         {
             ALOGE("AX_IVPS_SendFrame(Grp:%d) failed, ret=0x%x.", pThis->nIvpsGrp, ret);

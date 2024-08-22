@@ -129,6 +129,15 @@ SAMPLE_VIN_PARAM_T gtVinParam = {
     .statDeltaPtsFrmNum = 0,
 };
 
+typedef struct _IVPS_GET_THREAD_PARAM
+{
+    AX_U8 nIvpsIndex;
+    AX_U8 nIvpsGrp;
+    AX_U8 nIvpsChn;
+} IVPS_GET_THREAD_PARAM_T;
+#define SAMPLE_IVPS_CHN_TOTAL   (3)
+IVPS_GET_THREAD_PARAM_T gThreadParamForAI;
+
 static AX_VOID __cal_dump_pool(COMMON_SYS_POOL_CFG_T pool[], AX_SNS_HDR_MODE_E eHdrMode, AX_S32 nFrameNum)
 {
     if (NULL == pool) {
@@ -425,6 +434,7 @@ static AX_U32 __sample_case_config(SAMPLE_VIN_PARAM_T *pVinParam, COMMON_SYS_ARG
 
 static VENC_GETSTREAM_PARAM_T gGetStreamPara[SAMPLE_VENC_CHN_NUM_MAX];
 static pthread_t gGetStreamPid[SAMPLE_VENC_CHN_NUM_MAX];
+static pthread_t gGetStreamForAIPid = 0;
 typedef struct
 {
     AX_U64 totalGetStrmNum;
@@ -564,7 +574,7 @@ EXIT:
 }
 
 
-/* venc get stream task */
+/* venc get stream task 从编码器中获取编码后的流并推RTSP流*/
 static void *VencGetStreamProc(void *arg)
 {
     AX_S32 s32Ret = -1;
@@ -846,7 +856,7 @@ static AX_S32 SAMPLE_VENC_Init(SAMPLE_VIN_PARAM_T *pVinParam, AX_S32 nChnNum, AX
             gGetStreamPara[VencChn].VeChn = VencChn;
             gGetStreamPara[VencChn].bThreadStart = AX_TRUE;
             gGetStreamPara[VencChn].ePayloadType = config.ePayloadType;
-            pthread_create(&gGetStreamPid[VencChn], NULL, VencGetStreamProc, (void *)&gGetStreamPara[VencChn]);
+            pthread_create(&gGetStreamPid[VencChn], NULL, VencGetStreamProc, (void *)&gGetStreamPara[VencChn]); // 为每一个通道创建一个线程进行编码 （共三个通道，分别对应不同的分辨率）
         }
     }
     if(bVencSelect) {
@@ -1000,6 +1010,10 @@ static int SAMPLE_IVPS_Init(SAMPLE_VIN_PARAM_T *pVinParam, AX_S32 nGrpId, AX_S32
     AX_S32 nChnGetId = 0;
     stPipelineAttr.nOutFifoDepth[nChnGetId] = 1;
 #endif
+
+    AX_S32 nChnGetIdForAI = 0;
+    stPipelineAttr.nOutFifoDepth[nChnGetIdForAI] = 1;
+
     s32Ret = AX_IVPS_SetPipelineAttr(nGrpId, &stPipelineAttr);
     if (AX_SUCCESS != s32Ret) {
         ALOGE("AX_IVPS_SetPipelineAttr failed,nGrp %d,s32Ret:0x%x", nGrpId, s32Ret);
@@ -1024,6 +1038,8 @@ static int SAMPLE_IVPS_Init(SAMPLE_VIN_PARAM_T *pVinParam, AX_S32 nGrpId, AX_S32
         return s32Ret;
     }
 #endif
+
+    TestGetFrameThreadStart(nGrpId, nChnGetIdForAI);
     return 0;
 }
 
@@ -1176,6 +1192,69 @@ static AX_S32 SampleRtspDeInit(AX_VOID)
         gRtspParam.pRtspHandle = NULL;
     }
 
+    return 0;
+}
+
+
+static inline long get_time_in_microseconds() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+}
+AX_U64 gPreTime = 0;
+/**
+ * 
+*/
+static AX_VOID *GetFrameThreadForAI(AX_VOID *pArg)
+{
+    IVPS_GET_THREAD_PARAM_T *t = (IVPS_GET_THREAD_PARAM_T *)pArg;
+    IVPS_GRP IvpsGrp = t->nIvpsGrp;
+    IVPS_CHN IvpsChn = t->nIvpsChn;
+    AX_VIDEO_FRAME_T tVideoFrame;
+    ALOGI2("%s IVPS Grp: %d, Chn: %d", __func__, IvpsGrp, IvpsChn);
+    while (!ThreadLoopStateGet()) {
+        sleep(1);
+        memset(&tVideoFrame, 0, sizeof(AX_VIDEO_FRAME_T));
+        AX_S32 ret = AX_IVPS_GetChnFrame(IvpsGrp, IvpsChn, &tVideoFrame, -1);
+
+        if (0 != ret) {
+            if (AX_ERR_IVPS_BUF_EMPTY == ret) {
+                ALOGI2("GRP[%d]CHN[%d] read empty", IvpsGrp, IvpsChn);
+                usleep(1000);
+                continue;
+            }
+            ALOGE("GRP[%d]CHN[%d] AX_IVPS_GetChnFrame failed", IvpsGrp, IvpsChn);
+            usleep(1000);
+            continue;
+        }
+
+        tVideoFrame.u64VirAddr[0] = (AX_ULONG)AX_POOL_GetBlockVirAddr(tVideoFrame.u32BlkId[0]);
+        tVideoFrame.u64PhyAddr[0]  = AX_POOL_Handle2PhysAddr(tVideoFrame.u32BlkId[0]);
+        tVideoFrame.u32FrameSize = tVideoFrame.u32PicStride[0] * tVideoFrame.u32Height * 3 / 2;
+
+        AX_U64 nowTime = get_time_in_microseconds();
+        if (nowTime - gPreTime > 1000000) {
+            ALOGI2("GetFrameThreadForAI frameSize=%d.", tVideoFrame.u32FrameSize);
+            gPreTime = nowTime;
+        }
+
+        ret = AX_IVPS_ReleaseChnFrame(IvpsGrp, IvpsChn, &tVideoFrame);
+    }
+
+    pthread_join(gGetStreamForAIPid, NULL);
+    ALOGI2("GetFrameThreadForAI quit.");
+    return (AX_VOID *)0;
+}
+
+AX_S32 TestGetFrameThreadStart(AX_S32 nIvpsGrp, AX_S32 nIvpsChn)
+{
+    gThreadParamForAI.nIvpsGrp = nIvpsGrp;
+    gThreadParamForAI.nIvpsChn = nIvpsChn;
+    // AI
+    if (0 != pthread_create(&gGetStreamForAIPid, NULL, GetFrameThreadForAI, (AX_VOID *)&gThreadParamForAI)){
+        return -1;
+    }
+    pthread_detach(gGetStreamForAIPid);
     return 0;
 }
 
