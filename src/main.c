@@ -1,5 +1,6 @@
 #include "vin_ivps_venc_rtsp.h"
 #include "ivps_hal.h"
+// #include "opencv2/opencv.hpp"
 
 /* comm pool */
 COMMON_SYS_POOL_CFG_T gtSysCommPoolSingleDummySdr[] = {
@@ -1236,6 +1237,13 @@ static AX_VOID *GetFrameThreadForAI(AX_VOID *pArg)
         if (nowTime - gPreTime > 1000000) {
             ALOGI2("GetFrameThreadForAI frameSize=%d.", tVideoFrame.u32FrameSize);
             gPreTime = nowTime;
+
+            // cv::Mat yuvimg(tVideoFrame.u32Height * 3 / 2, tVideoFrame.u32Width, CV_8UC1, tVideoFrame.u64VirAddr);
+            // cv::Mat rgbimg(tVideoFrame.u32Height, tVideoFrame.u32Width, CV_8UC3);
+            // cv::cvtColor(yuvimg, rgbimg, cv::COLOR_YUV2BGR_NV21);
+
+            // cv::imwrite("11.jpg", rgbimg);
+
         }
 
         ret = AX_IVPS_ReleaseChnFrame(IvpsGrp, IvpsChn, &tVideoFrame);

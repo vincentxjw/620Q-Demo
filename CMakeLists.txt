@@ -21,6 +21,8 @@ set(SAMPLE_COMMON_PATH ${SAMPLE_PATH}/common)
 set(AX620Q_SDK_LIB_PATH ${AX620Q_SDK_DIR}/msp/out/arm_uclibc)
 set(SSL_PATH ${AX620Q_SDK_DIR}/third-party/openssl/arm)
 set(LIVE_PATH ${AX620Q_SDK_DIR}/third-party/live/out/arm/uclibc)
+set(OpenCV_DIR ${CMAKE_SOURCE_DIR}/libs/opencv/lib/cmake/opencv4)
+
 
 # install target and libraries
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/output)
@@ -60,6 +62,18 @@ set(SOURCE_FILES #main.cpp
     ${SAMPLE_PATH}/rtsp/AXRtspWrapper.cpp
 )
 
+
+find_package(OpenCV REQUIRED)
+if(OpenCV_FOUND)
+	message("OpenCV_DIR:" ${OpenCV_DIR})
+endif()
+
+include_directories( 
+        ${OpenCV_INCLUDE_DIRS}) 
+
+
+message("found opencv:" ${OpenCV_VERSION} ${OpenCV_LIBRARIES})
+
 set(Libraries
 libax_ivps.a
 libax_sys.a
@@ -82,6 +96,7 @@ libax_sys.a
 rt
 m
 dl
+${OpenCV_LIBRARIES}
 )
 
 link_directories( 
@@ -90,18 +105,6 @@ link_directories(
     ${SSL_PATH}/uclibc/lib
 )
 
-# set(OpenCV_DIR /opt/opencv/lib/cmake/opencv4)
-# find_package(OpenCV REQUIRED)
-# if(OpenCV_FOUND)
-# 	message("OpenCV_DIR:" ${OpenCV_DIR})
-# endif()
-
-# include_directories( 
-#         ${OpenCV_INCLUDE_DIRS}) 
-# link_directories( 
-#     /opt/opencv/lib) 
-
-# message("found opencv:" ${OpenCV_VERSION} ${OpenCV_LIBRARIES})
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output)
 
