@@ -3,6 +3,12 @@
 /***********************************************************************************/
 /*                                  UTILS                                          */
 /***********************************************************************************/
+#ifdef __cplusplus
+#if __cplusplus
+extern "C" {
+#endif
+#endif /* End of #ifdef __cplusplus */
+
 static AX_S32 BufPoolBlockAddrGet(AX_POOL PoolId, AX_U32 BlkSize, AX_U64 *nPhyAddr, AX_VOID **pVirAddr, AX_BLK *BlkId)
 {
 
@@ -951,3 +957,9 @@ AX_S32 IVPS_CropResizeThreadStop(AX_VOID)
     }
     return 0;
 }
+
+#ifdef __cplusplus
+#if __cplusplus
+}
+#endif
+#endif /* End of #ifdef __cplusplus */

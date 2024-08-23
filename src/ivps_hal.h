@@ -2,8 +2,8 @@
  * @Author: vincent vincent_xjw@163.com
  * @Date: 2024-08-20 16:42:59
  * @LastEditors: vincent vincent_xjw@163.com
- * @LastEditTime: 2024-08-21 11:43:01
- * @FilePath: /myvideo/src/ivps_hal.h
+ * @LastEditTime: 2024-08-22 14:17:47
+ * @FilePath: /620Q-Demo/src/ivps_hal.h
  * @Description: 
  * @
  * @Copyright (c) 2024 by vincent_xjw@163.com, All Rights Reserved. 
@@ -11,6 +11,12 @@
 
 #ifndef _IVPS_HAL_H_
 #define _IVPS_HAL_H_
+
+#ifdef __cplusplus
+#if __cplusplus
+extern "C" {
+#endif
+#endif /* End of #ifdef __cplusplus */
 
 #include <time.h>
 #include <stdio.h>
@@ -99,4 +105,12 @@ AX_S32 SAMPLE_IVPS_RegionUpdateStart(AX_S32 nRegionNum);
 AX_S32 SAMPLE_IVPS_RegionUpdateStop(AX_VOID);
 AX_S32 IVPS_CropResizeThreadStart(AX_S32 GrpId, AX_S32 ChnId);
 AX_S32 IVPS_CropResizeThreadStop(AX_VOID);
+
+#ifdef __cplusplus
+#if __cplusplus
+}
+#endif
+#endif /* End of #ifdef __cplusplus */
+
+
 #endif

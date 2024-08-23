@@ -1,5 +1,6 @@
 #ifndef _VIN_IVPS_VENC_RTSP_H_
 #define _VIN_IVPS_VENC_RTSP_H_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +18,12 @@
 #include "common_nt.h"
 #include "common_isp.h"
 #include "AXRtspWrapper.h"
+
+#ifdef __cplusplus
+#if __cplusplus
+extern "C" {
+#endif
+#endif /* End of #ifdef __cplusplus */
 
 #define ALIGN_UP_16(value) ((value + 0xF) & (~0xF))
 #define ALIGN_UP_64(value) ((value + 0x3F) & (~0x3F))
@@ -102,4 +109,44 @@ typedef struct {
     AX_RTSP_HANDLE pRtspHandle;
 } SAMPLE_RTSP_PARAM_T;
 
+
+AX_VOID __cal_dump_pool(COMMON_SYS_POOL_CFG_T pool[], AX_SNS_HDR_MODE_E eHdrMode, AX_S32 nFrameNum);
+AX_VOID __set_pipe_hdr_mode(AX_U32 *pHdrSel, AX_SNS_HDR_MODE_E eHdrMode);
+AX_VOID __set_vin_attr(AX_CAMERA_T *pCam, SAMPLE_SNS_TYPE_E eSnsType, AX_SNS_HDR_MODE_E eHdrMode,
+                              COMMON_VIN_MODE_E eSysMode, AX_BOOL bAiispEnable);
+AX_U32 __sample_case_single_dummy(AX_CAMERA_T *pCamList, SAMPLE_SNS_TYPE_E eSnsType,
+        SAMPLE_VIN_PARAM_T *pVinParam, COMMON_SYS_ARGS_T *pCommonArgs);
+AX_U32 __sample_case_single_os04a10(AX_CAMERA_T *pCamList, SAMPLE_SNS_TYPE_E eSnsType,
+        SAMPLE_VIN_PARAM_T *pVinParam, COMMON_SYS_ARGS_T *pCommonArgs);
+AX_U32 __sample_case_single_sc200ai(AX_CAMERA_T *pCamList, SAMPLE_SNS_TYPE_E eSnsType,
+        SAMPLE_VIN_PARAM_T *pVinParam, COMMON_SYS_ARGS_T *pCommonArgs);
+AX_U32 __sample_case_config(SAMPLE_VIN_PARAM_T *pVinParam, COMMON_SYS_ARGS_T *pCommonArgs,
+                                   COMMON_SYS_ARGS_T *pPrivArgs);
+AX_VOID SAMPLE_DeltaPtsStatistic(AX_S32 Chn, AX_VENC_STREAM_T *pstStream);
+AX_VOID *SAMPLE_VencSelectGetStreamProc(AX_VOID *arg);
+/* venc get stream task 从编码器中获取编码后的流并推RTSP流*/
+void *VencGetStreamProc(void *arg);
+AX_S32 SAMPLE_VencStartSelectGetStream(SAMPLE_VENC_SELECT_PARA_T *pstArg);
+AX_S32 SAMPLE_VENC_Init(SAMPLE_VIN_PARAM_T *pVinParam, AX_S32 nChnNum, AX_IVPS_ROTATION_E eRotAngle, AX_U32 bVencSelect);
+AX_S32 SAMPLE_VencStopSelect();
+AX_S32 SAMPLE_VENC_DeInit(AX_S32 nChnNum, AX_BOOL bVencSelect);
+int SAMPLE_IVPS_Init(SAMPLE_VIN_PARAM_T *pVinParam, AX_S32 nGrpId, AX_S32 nChnNum, AX_IVPS_ROTATION_E eRotAngle);
+AX_S32 SAMPLE_IVPS_DeInit(AX_S32 nGrpId, AX_S32 nChnNum);
+AX_S32 SAMPLE_SYS_LinkInit(AX_S32 nGrpId, AX_U8 nChnNum);
+AX_S32 SampleLinkDeInit(AX_S32 nGrpId, AX_U8 nChnNum);
+AX_S32 SampleRtspInit(AX_S32 nChnNum);
+AX_S32 SampleRtspDeInit(AX_VOID);
+long get_time_in_microseconds();
+AX_VOID *GetFrameThreadForAI(AX_VOID *pArg);
+AX_S32 TestGetFrameThreadStart(AX_S32 nIvpsGrp, AX_S32 nIvpsChn);
+AX_S32 SAMPLE_VIN_IVPS_VENC_RTSP(SAMPLE_VIN_PARAM_T *pVinParam);
+int SampleExec();
+
 #endif
+
+
+#ifdef __cplusplus
+#if __cplusplus
+}
+#endif
+#endif /* End of #ifdef __cplusplus */

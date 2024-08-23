@@ -44,9 +44,10 @@ include_directories(
     ${SAMPLE_PATH}/rtsp
 )
 
-set(SOURCE_FILES #main.cpp
+set(SOURCE_FILES 
     ${CMAKE_SOURCE_DIR}/src/ivps_hal.c
-    ${CMAKE_SOURCE_DIR}/src/main.c
+    ${CMAKE_SOURCE_DIR}/src/vin_ivps_venc_rtsp.c
+    ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${SAMPLE_COMMON_PATH}/common_venc.c
     ${SAMPLE_COMMON_PATH}/common_venc_log.c
     ${SAMPLE_COMMON_PATH}/common_arg_parse.c
@@ -60,6 +61,8 @@ set(SOURCE_FILES #main.cpp
     ${SAMPLE_PATH}/rtsp/AXLiveServerMediaSession.cpp
     ${SAMPLE_PATH}/rtsp/AXRtspServer.cpp
     ${SAMPLE_PATH}/rtsp/AXRtspWrapper.cpp
+
+    ${CMAKE_SOURCE_DIR}/src/Application.cpp
 )
 
 
